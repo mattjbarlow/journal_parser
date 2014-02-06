@@ -7,6 +7,12 @@ import pdb
 import datetime
 import time
 import textwrap
+import argparse
+
+def read_args():
+    parser = argparse.ArgumentParser(description='Convert files to Org format.')
+    parser.add_argument('--file', dest='ospath', help="path to file", required=True)
+    return parser.parse_args()
 
 def match_headers(txtfile, match_string):
     pattern = re.compile(r'(^{}: )(.*)'.format(match_string), re.M)
@@ -18,28 +24,39 @@ def match_headers(txtfile, match_string):
 def convert_date(journal_date):
     converted_time = time.strptime(journal_date, "%B %d, %Y %I:%M %p")
     return time.strftime("<%Y-%m-%d %a>", converted_time)
-    
-def fill_file(txtfile):
-    return textwrap.fill(txtfile, 70)
 
-def write_file(filename):
-    journalfile = open(filename, 'r')
-    txt = journalfile.read()
+def fill_file(text):
+    para_edge = re.compile(r"(\n\s*\n)", re.MULTILINE)
+    paragraphs = para_edge.split(text)
+    wrapped_file = []
+    for para in paragraphs:
+        wrapped_file.append(textwrap.fill(para, 70))
+
+    return wrapped_file
+    
+def write_file(txt):
     topic = match_headers(txt, "Topic")
     date = match_headers(txt, "Date")
-    filled_file = fill_file(txt)
+    wrapped_file = fill_file(txt)
     orgfilename = topic.replace(' ', '-') + ".org"
-    end_header = re.compile(r'Topic: .*', re.M)
-    journal_body = re.split(end_header, filled_file)[1]
+    header = re.compile(r'(Date|Topic): .*', re.M)
     
     f = open(orgfilename, 'w')
     f.write("* " + topic + "\n")
-    f.write(date + "\n")
-    f.write(journal_body)
+    f.write('<' + date + '>' + "\n")
+
+    for para in wrapped_file:
+        if re.match(header, para):
+            pass
+        else:
+            f.write(para)
+            f.write("\n")
+
     f.close()
     
 if __name__ == "__main__":
-    journalfile = open('journal01.txt', 'r')
+    args = read_args()
+    ospath = args.ospath
+    journalfile = open(filename, 'r')
     txt = journalfile.read()
-    print convert_date(match_headers(txt, "Date"))
-    print match_headers(txt, "Topic")
+    write_file(txt)
