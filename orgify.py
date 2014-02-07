@@ -33,12 +33,34 @@ def fill_file(text):
         wrapped_file.append(textwrap.fill(para, 70))
 
     return wrapped_file
+
+def parse_all_journals(text):
+    journal_edge = re.compile(r"(^Date: .*$\nTopic: .*$)", re.MULTILINE)
+    journals = journal_edge.split(text)
+    header = re.compile(r'(Date|Topic): .*', re.M)
+    journal_file = []
+    journal_file.append(journals[0])
+    for journal in journals:
+        if re.match(header, journal):
+            journal_file.append(journal)
+        else:
+            journal_file[-1] += journal
+
+    journal_file.pop(0)
+    return journal_file
     
 def write_file(txt):
     topic = match_headers(txt, "Topic")
     date = match_headers(txt, "Date")
     wrapped_file = fill_file(txt)
-    orgfilename = topic.replace(' ', '-') + ".org"
+    orgfilename = re.sub(r'[!?\\\'/]', '', topic)
+    orgfilename = orgfilename.replace(' ', '-') + ".org"
+
+    if orgfilename in os.listdir('.'):
+        while orgfilename in os.listdir('.'):
+            print "{} already exists. Choose another name: ".format(orgfilename)
+            orgfilename = raw_input()
+
     header = re.compile(r'(Date|Topic): .*', re.M)
     
     f = open(orgfilename, 'w')
@@ -57,6 +79,9 @@ def write_file(txt):
 if __name__ == "__main__":
     args = read_args()
     ospath = args.ospath
-    journalfile = open(filename, 'r')
-    txt = journalfile.read()
-    write_file(txt)
+    whole_journal = open(ospath, 'r')
+    txt = whole_journal.read()
+    journal_files = parse_all_journals(txt)
+
+    for journal in journal_files:
+        write_file(journal)
