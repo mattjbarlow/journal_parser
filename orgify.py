@@ -25,6 +25,14 @@ def convert_date(journal_date):
     converted_time = time.strptime(journal_date, "%B %d, %Y %I:%M %p")
     return time.strftime("<%Y-%m-%d %a>", converted_time)
 
+def fix_dates(txtfile)
+    date = match_headers(txtfile, "Date")
+    for listfile in os.listdir():
+        with open(listfile, "rt") as fin:
+            for line in fin:
+                re.sub(r'^Date: .*$', "Date: {}".format(convert_date(date)))
+        
+
 def fill_file(text):
     para_edge = re.compile(r"(\n\s*\n)", re.MULTILINE)
     paragraphs = para_edge.split(text)
@@ -65,7 +73,7 @@ def write_file(txt):
     
     f = open(orgfilename, 'w')
     f.write("* " + topic + "\n")
-    f.write('<' + date + '>' + "\n")
+    f.write(convert_date(date) + "\n")
 
     for para in wrapped_file:
         if re.match(header, para):
