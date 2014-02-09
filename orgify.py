@@ -25,14 +25,20 @@ def convert_date(journal_date):
     converted_time = time.strptime(journal_date, "%B %d, %Y %I:%M %p")
     return time.strftime("<%Y-%m-%d %a>", converted_time)
 
-def fix_dates(txtfile)
-    date = match_headers(txtfile, "Date")
-    for listfile in os.listdir():
-        with open(listfile, "rt") as fin:
-            for line in fin:
-                re.sub(r'^Date: .*$', "Date: {}".format(convert_date(date)))
-        
+def fix_date(txtfile):
+    old_date = re.search(r'(<)(.*)(>)', txtfile)
+    fixed_date = convert_date(old_date.group(2))
+    return re.sub(r'(<)(.*)(>)', fixed_date, txtfile)
 
+def fix_files(journal_dir):
+    for journal in os.listdir(journal_dir):
+        f = open(os.path.join(journal_dir, journal), 'r')
+        txt = f.read()
+        newtxt = fix_date(txt)
+        f = open(os.path.join(journal_dir, journal), 'w')
+        f.write(newtxt)
+        f.close()
+        
 def fill_file(text):
     para_edge = re.compile(r"(\n\s*\n)", re.MULTILINE)
     paragraphs = para_edge.split(text)
